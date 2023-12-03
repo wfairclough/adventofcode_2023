@@ -15,6 +15,52 @@ enum Hand {
     Rgb(Cube, Cube, Cube),
 }
 
+impl Hand {
+    fn red(&self) -> Cube {
+        match self {
+            Hand::Rgb(red, _, _) => *red,
+        }
+    }
+
+    fn green(&self) -> Cube {
+        match self {
+            Hand::Rgb(_, green, _) => *green,
+        }
+    }
+
+    fn blue(&self) -> Cube {
+        match self {
+            Hand::Rgb(_, _, blue) => *blue,
+        }
+    }
+}
+
+trait Replacments {
+    fn replace(&self, cube: Cube) -> Self;
+}
+
+impl Replacments for Hand {
+    fn replace(&self, cube: Cube) -> Self {
+        match cube {
+            Cube::Red(count) => {
+                match self {
+                    Hand::Rgb(_, green, blue) => Hand::Rgb(Cube::Red(count), *green, *blue),
+                }
+            },
+            Cube::Green(count) => {
+                match self {
+                    Hand::Rgb(red, _, blue) => Hand::Rgb(*red, Cube::Green(count), *blue),
+                }
+            },
+            Cube::Blue(count) => {
+                match self {
+                    Hand::Rgb(red, green, _) => Hand::Rgb(*red, *green, Cube::Blue(count)),
+                }
+            },
+        }
+    }
+}
+
 impl Ord for Hand {
     // A hand is less than another if red < red && green < green && blue < blue 
     fn cmp(&self, other: &Hand) -> std::cmp::Ordering {
@@ -61,6 +107,31 @@ impl IsValidForBag for Game {
     }
 }
 
+trait SmallestHand {
+    fn smallest_hand(&self) -> Hand;
+}
+
+impl SmallestHand for Game {
+    fn smallest_hand(&self) -> Hand {
+        let mut smallest_hand = Hand::Rgb(Cube::Red(0), Cube::Green(0), Cube::Blue(0));
+        for hand in &self.hands {
+            match hand {
+                Hand::Rgb(r, g, b) => {
+                    if r > &smallest_hand.red() {
+                        smallest_hand = smallest_hand.replace(r.clone());
+                    }
+                    if g > &smallest_hand.green() {
+                        smallest_hand = smallest_hand.replace(g.clone());
+                    }
+                    if b > &smallest_hand.blue() {
+                        smallest_hand = smallest_hand.replace(b.clone());
+                    }
+                },
+            }
+        }
+        smallest_hand
+    }
+}
 
 // Incorrect Guesses:
 // 3472
@@ -226,8 +297,8 @@ Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
 Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
         "#;
-        let samepl = sameple.trim();
-        let games = parse_contents(samepl);
+        let sample = sameple.trim();
+        let games = parse_contents(sample);
         assert_eq!(games.len(), 5);
         assert_eq!(games[0].game_number, 1);
         assert_eq!(games[0].hands.len(), 3);
@@ -239,6 +310,22 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
         assert_eq!(games[4].is_valid_for_bag(&bag), true);
         let sum = games.iter().filter(|g| g.is_valid_for_bag(&bag)).fold(0, |acc, g| acc + g.game_number);
         assert_eq!(sum, 8);
+    }
+
+
+    #[test]
+    fn test_sample_input_contents_for_smallest_hand() {
+        let sameple = r#"
+Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+        "#;
+        let sample = sameple.trim();
+        let games = parse_contents(sample);
+        assert_eq!(games.len(), 5);
+        assert_eq!(games[0].smallest_hand(), Hand::Rgb(Cube::Red(4), Cube::Green(2), Cube::Blue(6)));
     }
 }
 
