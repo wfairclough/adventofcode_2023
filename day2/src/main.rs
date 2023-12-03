@@ -33,6 +33,16 @@ impl Hand {
             Hand::Rgb(_, _, blue) => *blue,
         }
     }
+
+    fn power(&self) -> u32 {
+        match self {
+            Hand::Rgb(Cube::Red(r), Cube::Green(g), Cube::Blue(b)) => {
+                println!("{} {} {}", r, g, b);
+                (r.clone() as u32) * (g.clone() as u32) * (b.clone() as u32)
+            },
+            _ => panic!("Invalid hand"),
+        }
+    }
 }
 
 trait Replacments {
@@ -140,14 +150,18 @@ fn main() {
     // let games = parse_input("sample_input");
     let bag = Bag::Rgb(Cube::Red(12), Cube::Green(13), Cube::Blue(14));
     let mut sum = 0;
+    let mut sum_of_powers = 0;
     for game in games {
         let is_valid = game.is_valid_for_bag(&bag);
         println!("{} {:?}", is_valid, game);
         if is_valid {
             sum += game.game_number;
         }
+
+        sum_of_powers += game.smallest_hand().power();
     }
     println!("Sum: {}", sum);
+    println!("Sum of powers: {}", sum_of_powers);
 }
 
 // parse the input file into a vector of games
@@ -326,6 +340,12 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
         let games = parse_contents(sample);
         assert_eq!(games.len(), 5);
         assert_eq!(games[0].smallest_hand(), Hand::Rgb(Cube::Red(4), Cube::Green(2), Cube::Blue(6)));
+        assert_eq!(games[1].smallest_hand(), Hand::Rgb(Cube::Red(1), Cube::Green(3), Cube::Blue(4)));
+        assert_eq!(games[2].smallest_hand(), Hand::Rgb(Cube::Red(20), Cube::Green(13), Cube::Blue(6)));
+        assert_eq!(games[3].smallest_hand(), Hand::Rgb(Cube::Red(14), Cube::Green(3), Cube::Blue(15)));
+        assert_eq!(games[4].smallest_hand(), Hand::Rgb(Cube::Red(6), Cube::Green(3), Cube::Blue(2)));
+
+        assert_eq!(games[0].smallest_hand().power(), 48);
     }
 }
 
